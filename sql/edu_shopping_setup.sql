@@ -238,10 +238,10 @@ SELECT
     p.status,
     c.category_name,
     i.quantity AS stock_quantity
-FROM edu_shopping.products p
-JOIN edu_shopping.product_categories c
+FROM edu_shopping.products AS p
+JOIN edu_shopping.product_categories AS c
     ON p.category_id = c.category_id
-LEFT JOIN edu_shopping.inventory i
+LEFT JOIN edu_shopping.inventory AS i
     ON p.product_id = i.product_id
 WHERE p.status = 'ACTIVE';
 
@@ -330,8 +330,8 @@ BEGIN
     -- 2. 고객 ID 중복 체크
     IF EXISTS (
         SELECT 1
-        FROM edu_shopping.customers
-        WHERE customer_id = p_customer_id
+        FROM edu_shopping.customers AS c
+        WHERE c.customer_id = p_customer_id
     ) THEN
         RAISE EXCEPTION '이미 존재하는 고객 ID입니다: %', p_customer_id;
     END IF;
@@ -339,8 +339,8 @@ BEGIN
     -- 3. 전화번호 중복 체크
     IF EXISTS (
         SELECT 1
-        FROM edu_shopping.customers
-        WHERE phone = p_phone
+        FROM edu_shopping.customers AS c
+        WHERE c.phone = p_phone
     ) THEN
         RAISE EXCEPTION '이미 등록된 전화번호입니다: %', p_phone;
     END IF;
@@ -349,8 +349,8 @@ BEGIN
     IF p_email IS NOT NULL AND LENGTH(TRIM(p_email)) > 0 THEN
         IF EXISTS (
             SELECT 1
-            FROM edu_shopping.customers
-            WHERE email = p_email
+            FROM edu_shopping.customers AS c
+            WHERE c.email = p_email
         ) THEN
             RAISE EXCEPTION '이미 등록된 이메일입니다: %', p_email;
         END IF;
@@ -358,15 +358,15 @@ BEGIN
 
     -- 5. 상품 조회
     SELECT
-        product_name,
-        list_price,
-        status
+        p.product_name,
+        p.list_price,
+        p.status
     INTO
         v_product_name,
         v_unit_price,
         v_status
-    FROM edu_shopping.products
-    WHERE product_id = p_product_id;
+    FROM edu_shopping.products AS p
+    WHERE p.product_id = p_product_id;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION '존재하지 않는 상품 ID입니다: %', p_product_id;
@@ -378,11 +378,11 @@ BEGIN
 
     -- 6. 재고 조회 및 잠금
     SELECT
-        quantity
+        i.quantity
     INTO
         v_stock
-    FROM edu_shopping.inventory
-    WHERE product_id = p_product_id
+    FROM edu_shopping.inventory AS i
+    WHERE i.product_id = p_product_id
     FOR UPDATE;
 
     IF NOT FOUND THEN
@@ -448,9 +448,9 @@ BEGIN
     );
 
     -- 10. 재고 차감
-    UPDATE edu_shopping.inventory
-    SET quantity = quantity - p_quantity
-    WHERE product_id = p_product_id;
+    UPDATE edu_shopping.inventory AS i
+    SET quantity = i.quantity - p_quantity
+    WHERE i.product_id = p_product_id;
 
     -- 11. 결과 반환
     RETURN QUERY
@@ -497,3 +497,10 @@ GRANT EXECUTE ON FUNCTION public.place_edu_shopping_order(
 ) TO anon, authenticated;
 
 
+-- ============================================================
+-- 확인용 쿼리
+-- ============================================================
+
+SELECT *
+FROM public.v_edu_shopping_active_products
+ORDER BY product_id;
