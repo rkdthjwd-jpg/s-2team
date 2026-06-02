@@ -46,7 +46,7 @@ def get_session_purchased_quantity(product_id):
 
 
 def show_products():
-    print("\n=== 판매 중인 상품 목록 (재고 포함) ===")
+    print("\n=== 현재 판매 중인 상품 목록 (재고 수량 포함) ===")
     try:
         # edu_shopping 커스텀 스키마를 직접 조회합니다.
         res = (
